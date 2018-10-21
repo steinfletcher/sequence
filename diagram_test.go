@@ -9,10 +9,76 @@ import (
 	"testing"
 )
 
-func TestNewHttpEvents(t *testing.T) {
+func TestCssClassBasedOnStatusCode(t *testing.T) {
+	tests := []struct {
+		class  string
+		status int
+	}{
+		{"danger", 500},
+		{"warning", 400},
+		{"success", 200},
+	}
+	for _, test := range tests {
+		t.Run(test.class, func(t *testing.T) {
+			if class := getBadgeClass(test.status); !strings.Contains(class, test.class) {
+				t.Fail()
+			}
+		})
+	}
+}
+
+func TestComputesFinalResponseStatusCode(t *testing.T) {
+	events := httpEvents()
+
+	status, _ := events.finalResponseStatus()
+
+	if status != http.StatusCreated {
+		t.Fail()
+	}
+}
+
+func TestErrorIfNoFinalResponseStatusCode(t *testing.T) {
+	request, _ := http.NewRequest("POST", "http://two", strings.NewReader(`{"email": "a@b.com"}`))
+	events := NewHttpEvents().
+		Title("title").
+		SubTitle("subTitle").
+		Request(Request{
+			Source:      "one",
+			Target:      "two",
+			HttpRequest: *request,
+		})
+
+	_, err := events.finalResponseStatus()
+
+	if !strings.Contains(err.Error(), "was not `http.Response` type") {
+		t.Fail()
+	}
+}
+
+func TestNewHttpEventsExample(t *testing.T) {
+	htmlOutput, err := httpEvents().Render()
+
+	if err != nil {
+		t.Fail()
+	}
+
+	if htmlOutput == "" {
+		t.Fail()
+	}
+
+	f, err := os.Create("test_result.html")
+	if err != nil {
+		panic(err)
+	}
+	f.WriteString(htmlOutput)
+	s, _ := filepath.Abs("test_result.html")
+	fmt.Printf("file://%s\n", s)
+}
+
+func httpEvents() *Diagram {
 	request1, _ := http.NewRequest("POST", "http://two", strings.NewReader(`{"email": "a@b.com"}`))
 	request2, _ := http.NewRequest("POST", "http://three", strings.NewReader(`{"username": "a@b.com"}`))
-	htmlOutput, err := NewHttpEvents().
+	return NewHttpEvents().
 		Title("title").
 		SubTitle("subTitle").
 		Request(Request{
@@ -34,22 +100,5 @@ func TestNewHttpEvents(t *testing.T) {
 			Source:       "two",
 			Target:       "one",
 			HttpResponse: http.Response{StatusCode: http.StatusCreated},
-		}).
-		Render()
-
-	if err != nil {
-		t.Fail()
-	}
-
-	if htmlOutput == "" {
-		t.Fail()
-	}
-
-	f, err := os.Create("idx.html")
-	if err != nil {
-		panic(err)
-	}
-	f.WriteString(htmlOutput)
-	s, _ := filepath.Abs("idx.html")
-	fmt.Printf("file://%s\n", s)
+		})
 }

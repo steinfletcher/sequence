@@ -55,6 +55,20 @@ func TestErrorIfNoFinalResponseStatusCode(t *testing.T) {
 	}
 }
 
+func TestSupportsRenderingOfArbitraryJsonData(t *testing.T) {
+	out, err := NewHttpEvents().
+		MetaJSON(`{"a": 123}`).
+		Render()
+
+	if err != nil {
+		t.Fail()
+	}
+
+	if !strings.Contains(out, `<script type="application/json" id="metaJson">{"a": 123}</script>`) {
+		t.Fail()
+	}
+}
+
 func TestNewHttpEventsExample(t *testing.T) {
 	htmlOutput, err := httpEvents().Render()
 
@@ -71,7 +85,10 @@ func TestNewHttpEventsExample(t *testing.T) {
 		panic(err)
 	}
 	f.WriteString(htmlOutput)
-	s, _ := filepath.Abs("test_result.html")
+	s, err := filepath.Abs("test_result.html")
+	if err != nil {
+		panic(err)
+	}
 	fmt.Printf("file://%s\n", s)
 }
 

@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"strconv"
+	"text/template"
 )
 
 var incTemplateFunc = &template.FuncMap{
@@ -25,6 +25,7 @@ type (
 		subTitle string
 		name     string
 		events   []interface{}
+		metaJson string
 	}
 
 	Request struct {
@@ -46,6 +47,7 @@ type (
 		BadgeClass     string
 		StatusCode     string
 		LogEntries     []logEntry
+		MetaJSON       string
 	}
 
 	logEntry struct {
@@ -76,6 +78,7 @@ func (d Diagram) Render() (string, error) {
 		BadgeClass:     getBadgeClass(statusCode),
 		StatusCode:     strconv.Itoa(statusCode),
 		LogEntries:     httpEventLog,
+		MetaJSON:       d.metaJson,
 	}
 	return renderHtmlPage(htmlModel)
 }
@@ -105,12 +108,20 @@ func (d *Diagram) Name(name string) *Diagram {
 	return d
 }
 
+func (d *Diagram) MetaJSON(jsonData string) *Diagram {
+	d.metaJson = jsonData
+	return d
+}
+
 func (d *Diagram) finalResponseStatus() (int, error) {
 	status := func(o interface{}) (int, error) {
 		if res, ok := o.(Response); ok {
 			return res.HttpResponse.StatusCode, nil
 		}
 		return -1, errors.New("final http event was not `http.Response` type")
+	}
+	if len(d.events) == 0 {
+		return -1, nil
 	}
 	return status(d.events[len(d.events)-1])
 }
@@ -275,6 +286,7 @@ const tmpl = `<!DOCTYPE html>
         padding-bottom: 2rem;
     }
 </style>
+{{if $.MetaJSON }}<script type="application/json" id="metaJson">{{ $.MetaJSON }}</script>{{end}}
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.13.1/build/highlight.min.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>
 </body>

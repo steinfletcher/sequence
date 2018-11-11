@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"strconv"
-	"text/template"
 )
 
 var incTemplateFunc = &template.FuncMap{
@@ -25,7 +25,7 @@ type (
 		subTitle string
 		name     string
 		events   []interface{}
-		metaJson string
+		metaJson template.JS
 	}
 
 	Request struct {
@@ -47,7 +47,7 @@ type (
 		BadgeClass     string
 		StatusCode     string
 		LogEntries     []logEntry
-		MetaJSON       string
+		MetaJSON       template.JS
 	}
 
 	logEntry struct {
@@ -108,7 +108,7 @@ func (d *Diagram) Name(name string) *Diagram {
 	return d
 }
 
-func (d *Diagram) MetaJSON(jsonData string) *Diagram {
+func (d *Diagram) MetaJSON(jsonData template.JS) *Diagram {
 	d.metaJson = jsonData
 	return d
 }

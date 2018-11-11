@@ -1,10 +1,8 @@
 package sequence
 
 import (
-	"fmt"
+	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -69,27 +67,23 @@ func TestSupportsRenderingOfArbitraryJsonData(t *testing.T) {
 	}
 }
 
-func TestNewHttpEventsExample(t *testing.T) {
-	htmlOutput, err := httpEvents().Render()
+func TestNewHttpEvents(t *testing.T) {
+	expected, err := ioutil.ReadFile("testdata/expected_result.html")
+	if err != nil {
+		panic(err)
+	}
+
+	actual, err := httpEvents().Render()
 
 	if err != nil {
 		t.Fail()
 	}
-
-	if htmlOutput == "" {
+	if actual == "" {
 		t.Fail()
 	}
-
-	f, err := os.Create("test_result.html")
-	if err != nil {
-		panic(err)
+	if string(expected) != actual {
+		t.Fail()
 	}
-	f.WriteString(htmlOutput)
-	s, err := filepath.Abs("test_result.html")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("file://%s\n", s)
 }
 
 func httpEvents() *Diagram {

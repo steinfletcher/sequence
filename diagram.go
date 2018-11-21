@@ -193,10 +193,7 @@ func newEventLogEntry(header []byte, readCloser io.ReadCloser, contentType strin
 
 	buf := new(bytes.Buffer)
 	if contentType == "application/json" {
-		err := json.Indent(buf, body, "", "    ")
-		if err != nil {
-			panic(err)
-		}
+		json.Indent(buf, body, "", "    ")
 	} else {
 		_, err := buf.Write(body)
 		if err != nil {

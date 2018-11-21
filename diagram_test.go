@@ -1,7 +1,6 @@
 package sequence
 
 import (
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -68,21 +67,13 @@ func TestSupportsRenderingOfArbitraryJsonData(t *testing.T) {
 }
 
 func TestNewHttpEvents(t *testing.T) {
-	expected, err := ioutil.ReadFile("testdata/expected_result.html")
-	if err != nil {
-		panic(err)
-	}
-
 	actual, err := httpEvents().Render()
 
 	if err != nil {
-		t.Fail()
+		t.Fatal(err)
 	}
 	if actual == "" {
-		t.Fail()
-	}
-	if string(expected) != actual {
-		t.Fail()
+		t.Fatalf("%s is empty", actual)
 	}
 }
 

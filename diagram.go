@@ -167,7 +167,7 @@ func newRequestLogModel(req *http.Request) (logEntry, error) {
 	if err != nil {
 		return logEntry{}, err
 	}
-	return newEventLogEntry(requestDump, req.Body)
+	return newEventLogEntry(requestDump, req.Body, req.Header.Get("Content-Type"))
 }
 
 func newResponseLogModel(res *http.Response) (logEntry, error) {
@@ -175,10 +175,10 @@ func newResponseLogModel(res *http.Response) (logEntry, error) {
 	if err != nil {
 		return logEntry{}, err
 	}
-	return newEventLogEntry(requestDump, res.Body)
+	return newEventLogEntry(requestDump, res.Body, res.Header.Get("Content-Type"))
 }
 
-func newEventLogEntry(header []byte, readCloser io.ReadCloser) (logEntry, error) {
+func newEventLogEntry(header []byte, readCloser io.ReadCloser, contentType string) (logEntry, error) {
 	if readCloser == nil {
 		return logEntry{
 			Header: string(header),
@@ -190,11 +190,20 @@ func newEventLogEntry(header []byte, readCloser io.ReadCloser) (logEntry, error)
 	if err != nil {
 		return logEntry{}, err
 	}
+
 	buf := new(bytes.Buffer)
-	json.Indent(buf, body, "", "    ")
-	if err != nil {
-		return logEntry{}, err
+	if contentType == "application/json" {
+		err := json.Indent(buf, body, "", "    ")
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		_, err := buf.Write(body)
+		if err != nil {
+			panic(err)
+		}
 	}
+
 	return logEntry{
 		Header: string(header),
 		Body:   string(buf.String()),
